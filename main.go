@@ -1,8 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
+	"log"
 	"net/http"
 )
 
@@ -11,8 +14,11 @@ type product struct {
 	Price float32 `json:"price"`
 }
 
+var db *sql.DB
+
 func main() {
 	fmt.Println("Hello World")
+	dbConnection()
 
 	http.HandleFunc("/product", productHandler)
 	err := http.ListenAndServe(":8090", nil)
@@ -42,4 +48,27 @@ func productHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("Response error:", err)
 		return
 	}
+}
+
+func dbConnection() {
+	fmt.Println("Db connection start")
+	cfg := mysql.Config{
+		User:   "myuser",
+		Passwd: "mypassword",
+		Net:    "tcp",
+		Addr:   "db:3306",
+		DBName: "mydatabase",
+	}
+
+	var err error
+	db, err = sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
+	fmt.Println("Connected to database")
 }
